@@ -1,4 +1,6 @@
-# NEXUS Metro - Buscador Inteligente de Rutas
+# Actividad 2 - NEXUS Metro - Buscador Inteligente de Rutas
+
+## Estefanía Aguas Sánchez - Inteligencia Artificial - Ingeniería en Ciencia de Datos
 
 ## Descripción
 
