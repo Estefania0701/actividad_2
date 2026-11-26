@@ -10,6 +10,8 @@ Este proyecto implementa un buscador inteligente de rutas utilizando una base de
 
 El sistema encuentra la ruta con el menor tiempo estimado de viaje, considerando las conexiones entre estaciones y el costo de tiempo asociado a los transbordos.
 
+Adicionalmente, a modo de aprendizaje personal, el proyecto incluye un script (`map/nexus_metro_map.py`) para la generación de la imagen con el mapa del sistema de transporte, usando **Matplotlib** y **NumPy**, que queda almacenada en `assets/nexus_metro_map.png` . Cabe resaltar que este componente no hace parte del funcionamiento del algoritmo de búsqueda y fue desarrollado únicamente para ayudar en la comprensión del sistema de transporte a partir de su representación visual.
+
 ## Características
 
 - Tres líneas de metro ficticias.
@@ -55,6 +57,10 @@ Ejecutar la aplicación desde la raíz del proyecto:
 
 Ingrese las estaciones de origen y destino cuando el sistema se lo solicite.
 
+De forma opcional, para visualizar y generar el mapa del sistema:
+
+    python -m map.nexus_metro_map
+
 ## Ejecución de pruebas
 
 Ejecutar:
@@ -63,13 +69,13 @@ Ejecutar:
 
 ## Estructura del proyecto
 
-- map/nexus_metro_map.py: Generación de imagen con mapa del sistema de transporte.
+- map/nexus_metro_map.py: Script para generar y visualizar el mapa (Matplotlib y NumPy).
 - src/knowledge_base.py: Base de conocimiento y reglas lógicas.
 - src/route_engine.py: Construcción del grafo y algoritmo de búsqueda de rutas.
 - src/main.py: Interfaz de usuario por consola.
 - tests/test_routes.py: Pruebas automatizadas.
 - docs/: Documentación del proyecto.
-- assets/: Mapa del sistema de transporte.
+- assets/nexus_metro_map.png: Mapa del sistema de transporte.
 
 ## Algoritmo
 
