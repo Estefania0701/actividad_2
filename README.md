@@ -74,7 +74,6 @@ Ejecutar:
 - src/route_engine.py: Construcción del grafo y algoritmo de búsqueda de rutas.
 - src/main.py: Interfaz de usuario por consola.
 - tests/test_routes.py: Pruebas automatizadas.
-- docs/: Documentación del proyecto.
 - assets/nexus_metro_map.png: Mapa del sistema de transporte.
 
 ## Algoritmo
