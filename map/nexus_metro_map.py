@@ -564,12 +564,16 @@ for station_name in ordered_stations:
 
     if station_name in TRANSFER_STATIONS:
         display_text = f"{station_name}\n(Transbordo: {TRANSFER_TIME} min)"
-        font_size = 9.5
+        font_size = 7
         font_color = COLORS["transfer"]
     else:
         display_text = station_name
-        font_size = 10
-        font_color = COLORS["text"]
+        font_size = 8
+        font_color = next(
+            LINES[ln]["color"]
+            for ln, line in LINES.items()
+            if station_name in line["stations"]
+        )
 
     text = ax.annotate(
         display_text,
