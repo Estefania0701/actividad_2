@@ -58,6 +58,14 @@ LINES = {
     }
 }
 
+TRAVEL_TIMES = {
+    "Línea Central": [4, 5, 4, 3, 5],
+    "Línea Costera": [5, 4, 6, 5, 4],
+    "Línea Universitaria": [6, 5, 4, 6, 5]
+}
+
+TRANSFER_TIME = 4  # minutos
+
 
 # ============================================================
 # 2. UNIQUE STATION COORDINATES
@@ -227,6 +235,81 @@ for line_name, route in ROUTES.items():
 
 
 # ============================================================
+# 8.1. DRAW TRAVEL TIME BADGES BETWEEN STATIONS
+# ============================================================
+
+def get_path_midpoint(points):
+    """Calcula el punto medio geométrico a lo largo de una polilínea."""
+    if len(points) == 2:
+        return ((points[0][0] + points[1][0]) / 2.0, (points[0][1] + points[1][1]) / 2.0)
+
+    segments = []
+    total_dist = 0.0
+    for p0, p1 in zip(points[:-1], points[1:]):
+        dist = float(np.hypot(p1[0] - p0[0], p1[1] - p0[1]))
+        segments.append((p0, p1, dist))
+        total_dist += dist
+
+    half_dist = total_dist / 2.0
+    accum = 0.0
+    for p0, p1, dist in segments:
+        if accum + dist >= half_dist:
+            ratio = (half_dist - accum) / dist if dist > 0 else 0
+            mx = p0[0] + ratio * (p1[0] - p0[0])
+            my = p0[1] + ratio * (p1[1] - p0[1])
+            return (mx, my)
+        accum += dist
+    return points[-1]
+
+
+time_badge_texts = []
+
+for line_name, line_info in LINES.items():
+    color = line_info["color"]
+    stations = line_info["stations"]
+    route = ROUTES[line_name]
+    times = TRAVEL_TIMES[line_name]
+
+    for i in range(len(stations) - 1):
+        s_from = stations[i]
+        s_to = stations[i + 1]
+        t = times[i]
+
+        p_from = STATIONS[s_from]
+        p_to = STATIONS[s_to]
+
+        idx_from = next(idx for idx, p in enumerate(route) if np.allclose(p, p_from))
+        idx_to = next(idx for idx, p in enumerate(route) if np.allclose(p, p_to))
+
+        if idx_from < idx_to:
+            subroute = route[idx_from:idx_to + 1]
+        else:
+            subroute = route[idx_to:idx_from + 1][::-1]
+
+        mid_x, mid_y = get_path_midpoint(subroute)
+
+        badge = ax.text(
+            mid_x,
+            mid_y,
+            f"{t} min",
+            fontsize=8,
+            fontweight="bold",
+            color=color,
+            ha="center",
+            va="center",
+            zorder=6,
+            bbox=dict(
+                boxstyle="round,pad=0.25,rounding_size=0.4",
+                facecolor="white",
+                edgecolor=color,
+                linewidth=1.2,
+                alpha=0.95
+            )
+        )
+        time_badge_texts.append(badge)
+
+
+# ============================================================
 # 9. DRAW STATIONS
 # ============================================================
 
@@ -341,7 +424,21 @@ legend_elements.append(
         markeredgecolor=COLORS["transfer"],
         markeredgewidth=2,
         markersize=10,
-        label="Estación de transbordo"
+        label=f"Estación de transbordo ({TRANSFER_TIME} min)"
+    )
+)
+
+legend_elements.append(
+    Line2D(
+        [0],
+        [0],
+        color="none",
+        marker="s",
+        markerfacecolor="white",
+        markeredgecolor=COLORS["secondary"],
+        markeredgewidth=1.2,
+        markersize=9,
+        label="Tiempo entre estaciones"
     )
 )
 
@@ -414,6 +511,12 @@ line_samples = np.vstack(line_samples)
 legend_box = legend.get_window_extent(renderer).expanded(1.05, 1.15)
 axes_box = ax.get_window_extent(renderer)
 
+# d) Travel time badge boxes
+badge_boxes = [
+    t.get_window_extent(renderer).expanded(1.1, 1.1)
+    for t in time_badge_texts
+]
+
 
 def label_cost(bbox, placed_boxes, rank):
     """Lower cost = better position."""
@@ -424,6 +527,9 @@ def label_cost(bbox, placed_boxes, rank):
 
     # Overlap with station markers
     cost += 1000 * sum(bbox.overlaps(m) for m in marker_boxes)
+
+    # Overlap with travel time badges
+    cost += 1000 * sum(bbox.overlaps(b) for b in badge_boxes)
 
     # Overlap with legend
     if bbox.overlaps(legend_box):
@@ -456,14 +562,23 @@ for station_name in ordered_stations:
 
     x, y = STATIONS[station_name]
 
+    if station_name in TRANSFER_STATIONS:
+        display_text = f"{station_name}\n(Transbordo: {TRANSFER_TIME} min)"
+        font_size = 9.5
+        font_color = COLORS["transfer"]
+    else:
+        display_text = station_name
+        font_size = 10
+        font_color = COLORS["text"]
+
     text = ax.annotate(
-        station_name,
+        display_text,
         xy=(x, y),
         xytext=(0, 0),
         textcoords="offset points",
-        fontsize=10,
+        fontsize=font_size,
         fontweight="semibold",
-        color=COLORS["text"],
+        color=font_color,
         ha="left",
         va="center",
         zorder=10,
@@ -532,15 +647,12 @@ assets_dir = Path(__file__).resolve().parent.parent / "assets"
 assets_dir.mkdir(parents=True, exist_ok=True)
 output_path = assets_dir / "nexus_metro_map.png"
 
-if not output_path.exists():
-    plt.savefig(
-        output_path,
-        dpi=300,
-        bbox_inches="tight",
-        facecolor=fig.get_facecolor()
-    )
-    print(f"Mapa guardado en: {output_path}")
-else:
-    print(f"La imagen ya existe en: {output_path}")
+plt.savefig(
+    output_path,
+    dpi=300,
+    bbox_inches="tight",
+    facecolor=fig.get_facecolor()
+)
+print(f"Mapa guardado en: {output_path}")
 
 plt.show()
